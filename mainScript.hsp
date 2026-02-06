@@ -1,0 +1,352 @@
+#include "hsp3dish.as"
+
+screen 0,320,480,0,0,0,320,480
+
+#packopt xsize 320
+#packopt ysize 480
+title "TapBattle"
+
+setcls CLSMODE_NONE
+
+*startUp
+
+	dim tapInfo,4
+	randomize
+
+	font msmincho,36
+	redraw 0
+		gmode 0
+		color 0,0,0
+		boxf
+		color 255,255,255
+		pos 30,80
+		mes "Comet"
+	redraw 1
+
+	//素材読み込み処理
+	buffer 1
+	picload "bg03.jpg"
+
+	buffer 2
+	picload "shootdot.png"
+
+	buffer 3
+	picload "vpad.png"
+
+	gsel 0,0
+	await 1000
+
+	repeat 30
+		redraw 0
+		gmode 0
+		color cnt*5,cnt*5,cnt*5
+		boxf
+		color 255,255,255
+		pos 30,80
+		mes "Comet"
+		redraw 1
+		await 16
+	loop
+
+	font msmincho,36
+
+	redraw 0
+		color 0,0,0
+		boxf
+	redraw 1
+	wait 10
+
+	SystemMode=0
+
+*titleLoop
+	repeat
+		redraw 0
+		gmode 3,0,0,cnt*5
+		pos double(sin(deg2rad(cnt/2)))*10-10,0 : gcopy 1,0,0,640,480
+		pos 100.0+sin(deg2rad(cnt))*10,80 : color 255,255,255 : mes "Shot Battle"
+		pos 60,300 : color 255,200,200 : mes "<<!Start!>>"
+		redraw 1
+		repeat 8
+			mtinfo tapInfo,cnt
+			if tapInfo(0)=1 {
+				if tapInfo(2)>280 {
+					SystemMode=1
+				}
+			}
+		loop
+		await 16
+		if SystemMode=1 {
+			SystemMode=0
+			break
+		}
+	loop
+
+*gameLoop
+	font msmincho,12
+	repeat 30
+		redraw 0
+			gmode 3,0,0,32
+			color 255,255,255
+			grect ginfo_winx/2,ginfo_winy/2,0,ginfo_winx,ginfo_winy
+		redraw 1
+		await 16
+	loop
+	repeat 100
+		redraw 0
+			color 255,255,255
+			boxf
+			if cnt<10 {
+				gmode 3,0,0,cnt*25
+			}else{
+				gmode 0
+			}
+			color 0,0,0
+			grect ginfo_winx/2,ginfo_winy-60,0,ginfo_winx,20
+			color 255,255,255
+			if cnt<20 {
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "ゲームを開始する準備をしています..",1
+			}else{
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "ゲームを始める準備をしています..",1
+				repeat cnt/10
+					mes ".",1
+				loop
+			}
+			mes ".",0
+		redraw 1
+		await 16
+	loop
+	dim PointData,128,5
+	tempX=ginfo_winx/2
+	randomize
+	repeat 128
+		PointData(cnt,0)=0						//スタンバイ
+		tempXNow=tempX+rnd(150)-75
+		PointData(cnt,1)=tempXNow				//X
+		tempX=tempXNow
+		if tempX<20 {
+			tempX=20
+		}
+		if tempX>ginfo_winx-20 {
+			tempX=ginfo_winx-20
+		}
+		PointData(cnt,2)=-30					//Y
+		redraw 0
+			hsvcolor cnt*2,64,255
+			boxf (double(ginfo_winx)/128)*cnt,45,(double(ginfo_winx)/128)*(cnt+1),50
+		redraw 1
+		await 8
+	loop
+
+	repeat 32
+		redraw 0
+		color 0,0,0
+		gmode 3,0,0,64
+		grect ginfo_winx/2,ginfo_winy/2,0,ginfo_winx,ginfo_winy
+		redraw 1
+		await 16
+	loop
+
+	Life=100
+	EnemyLife=10000
+
+	repeat
+		redraw 0
+		gmode 3,0,0,64
+		pos double(sin(deg2rad(cnt/2)))*10-10,0 : gcopy 1,0,0,640,480
+		if cnt\10 = 0 {
+			ObjBirth
+		}
+		MovePoints
+		//敵ライフ
+		color 255,64,64
+		boxf 0,0,(double(EnemyLife)/10000)*ginfo_winx,15
+		pos 10,2 : color 255,255,255 : mes str(EnemyLife)+"/10000"
+		color 64,255,64
+		boxf 0,ginfo_winy,(double(Life)/100)*ginfo_winx,ginfo_winy-15
+		pos 10,ginfo_winy-13 : color 255,255,255 : mes str(Life)+"/100"
+
+		if Life<=0 {
+			SystemMode=1
+			break
+		}
+		if EnemyLife<=0 {
+			SystemMode=2
+			break
+		}
+		redraw 1
+		await 16
+	loop
+
+	if SystemMode=1 {
+		repeat 400
+		redraw 0
+		gmode 3,0,0,64
+		pos double(sin(deg2rad(cnt/2)))*10-10,0 : gcopy 1,0,0,640,480
+		if cnt\10 = 0 {
+			ObjBirth
+		}
+		MovePoints
+		//敵ライフ
+		//color 255,64,64
+		//boxf 0,0,(double(EnemyLife)/10000)*ginfo_winx,15
+		//pos 10,2 : color 255,255,255 : mes str(EnemyLife)+"/10000"
+		//color 64,255,64
+		//boxf 0,ginfo_winy,(double(Life)/100)*ginfo_winx,ginfo_winy-15
+		//pos 10,ginfo_winy-13 : color 255,255,255 : mes str(Life)+"/100"
+
+			if cnt<10 {
+				gmode 3,0,0,cnt*25
+			}else{
+				gmode 0
+			}
+			color 0,0,0
+			grect ginfo_winx/2,ginfo_winy-60,0,ginfo_winx,20
+			color 255,255,255
+			if cnt<20 {
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "GAME OVER...GAME OVER...",1
+			}else{
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "GAME OVER...GAME OVER...",1
+				repeat cnt/20
+					mes "GAME OVER...",1
+				loop
+			}
+			mes "GAME OVER...",0
+
+		redraw 1
+		await 16
+		loop
+	}
+
+	if SystemMode=2 {
+		repeat 500
+		redraw 0
+		gmode 3,0,0,64
+		pos double(sin(deg2rad(cnt/2)))*10-10,0 : gcopy 1,0,0,640,480
+		if cnt\10 = 0 {
+			ObjBirth
+		}
+		MovePoints
+		//敵ライフ
+		//color 255,64,64
+		//boxf 0,0,(double(EnemyLife)/10000)*ginfo_winx,15
+		//pos 10,2 : color 255,255,255 : mes str(EnemyLife)+"/10000"
+		//color 64,255,64
+		//boxf 0,ginfo_winy,(double(Life)/100)*ginfo_winx,ginfo_winy-15
+		//pos 10,ginfo_winy-13 : color 255,255,255 : mes str(Life)+"/100"
+
+			if cnt<10 {
+				gmode 3,0,0,cnt*25
+			}else{
+				gmode 0
+			}
+			color 0,0,0
+			grect ginfo_winx/2,ginfo_winy-60,0,ginfo_winx,20
+			hsvcolor cnt*2,64,255
+			if cnt<20 {
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "YOU WIN...congratulation...",1
+			}else{
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "YOU WIN...congratulation...",1
+				cnt_t=cnt
+				repeat cnt/20
+					hsvcolor cnt_t*2+cnt*2,64,255
+					mes "Thank you for your playing...",1
+				loop
+			}
+			mes "Thank you for your playing...",0
+
+		redraw 1
+		await 16
+		loop
+	}
+
+	SystemMode=0
+	repeat 30
+		redraw 0
+			gmode 3,0,0,32
+			color 255,255,255
+			grect ginfo_winx/2,ginfo_winy/2,0,ginfo_winx,ginfo_winy
+		redraw 1
+		await 16
+	loop
+	repeat 100
+		redraw 0
+			color 255,255,255
+			boxf
+			if cnt<10 {
+				gmode 3,0,0,cnt*25
+			}else{
+				gmode 0
+			}
+			color 0,0,0
+			grect ginfo_winx/2,ginfo_winy-60,0,ginfo_winx,20
+			color 255,255,255
+			if cnt<20 {
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "ゲームを終了する準備をしています..",1
+			}else{
+				pos ginfo_winx-cnt*3,ginfo_winy-68 : mes "ゲームを終了する準備をしています..",1
+				repeat cnt/10
+					mes ".",1
+				loop
+			}
+			mes ".",0
+		redraw 1
+		await 16
+	loop
+
+	font msmincho,36
+	//タイトルに戻る
+	goto *titleLoop
+
+#deffunc ObjBirth
+	repeat 128
+		if PointData(cnt,0)=0 {
+			PointData(cnt,0)=1
+			break
+		}
+	loop
+	return
+
+#deffunc MovePoints
+	repeat 128
+		//Pointsを動かす
+		if PointData(cnt,0)=1 {
+			color 255,255,255
+			circle PointData(cnt,1)-10,PointData(cnt,2)-10,PointData(cnt,1)+10,PointData(cnt,2)+10,0
+			line PointData(cnt,1),PointData(cnt,2)-18,PointData(cnt,1),PointData(cnt,2)+18
+			line PointData(cnt,1)-18,PointData(cnt,2),PointData(cnt,1)+18,PointData(cnt,2)
+
+			//押されてるかどうか
+			cnt_t=cnt
+			repeat 8
+				mtinfo tapInfo,cnt
+				if tapInfo(0)=1 {
+					if (tapInfo(1)-PointData(cnt_t,1))*(tapInfo(1)-PointData(cnt_t,1))+(tapInfo(2)-PointData(cnt_t,2))*(tapInfo(2)-PointData(cnt_t,2))<700 {
+						//タップされた
+						PointData(cnt_t,0)=2
+					}
+				}
+			loop
+
+			PointData(cnt,2)+5
+			if PointData(cnt,2)>ginfo_winy+40 {
+				Life-4
+				PointData(cnt,2)=-30
+				PointData(cnt,0)=0
+			}
+		}else : if PointData(cnt,0)=2 {
+			//反射状態
+			color 255,200,200
+			circle PointData(cnt,1)-10,PointData(cnt,2)-10,PointData(cnt,1)+10,PointData(cnt,2)+10,0
+			line PointData(cnt,1),PointData(cnt,2)-18,PointData(cnt,1),PointData(cnt,2)+18
+			line PointData(cnt,1)-18,PointData(cnt,2),PointData(cnt,1)+18,PointData(cnt,2)
+			PointData(cnt,2)-5
+			if PointData(cnt,2)<-20 {
+				EnemyLife-(rnd(3)+1)
+				Life++
+				PointData(cnt,2)=-30
+				PointData(cnt,1)=rnd(ginfo_winx)
+				PointData(cnt,0)=0
+			}
+		}
+	loop
+	return
